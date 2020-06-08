@@ -1,6 +1,6 @@
 # node-exporter-plugin
 
-prome node exporter build plugin
+build prometheus `node_exporter` to golang plugin
 
 ## usage
 
