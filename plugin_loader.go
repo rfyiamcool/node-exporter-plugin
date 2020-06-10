@@ -6,25 +6,33 @@ import (
 	"os/signal"
 	"plugin"
 	"syscall"
+
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
+var (
+	promePlugin = kingpin.Flag("plugin", "node exporter plugin file").String()
+)
+
+// plugin methods
 type DirectHandler interface {
 	Handle() error
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		panic("input plugin")
-	}
-
-	mod := os.Args[1]
+	// must use kingpin compatibly with node_exporter init.
+	kingpin.HelpFlag.Short('h')
+	kingpin.Parse()
 
 	// load plugin
-	plug, err := plugin.Open(mod)
+	plug, err := plugin.Open(*promePlugin)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+
+	// parse command again, initialize node_exporter default values.
+	kingpin.Parse()
 
 	// look up a symbol (an exported function or variable)
 	// in this case, variable Handler
@@ -56,7 +64,7 @@ func main() {
 	sigch := make(chan os.Signal, 1)
 	signal.Notify(sigch, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	for sig := range sigch {
-		fmt.Println("recv sig: %s", sig)
+		fmt.Printf("recv sig: %s", sig)
 		os.Exit(0)
 	}
 }
